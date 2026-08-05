@@ -414,11 +414,13 @@ async def test_fastapi_usage_pattern():
                 "fatigue": fatigue,
                 "timestamp": datetime.now().isoformat(),
             })
-            logger.info(f"[接收指标数据] 专注: {focus:.1f}, 压力: {stress:.1f}, 疲劳: {fatigue:.1f}")
-            if kwargs:
-                logger.info(f"  [扩展指标] delta: {kwargs.get('delta')}, theta: {kwargs.get('theta')}, "
-                           f"alpha: {kwargs.get('alpha')}, beta: {kwargs.get('beta')}, gamma: {kwargs.get('gamma')}, "
-                           f"asy: {kwargs.get('asy')}")
+            logger.info(f"[接收指标数据] 专注:{focus:.1f} 压力:{stress:.1f} 疲劳:{fatigue:.1f}")
+            logger.info(f"  [扩展指标] δ={kwargs.get('delta', 0):.1f} "
+                       f"θ={kwargs.get('theta', 0):.1f} "
+                       f"α={kwargs.get('alpha', 0):.1f} "
+                       f"β={kwargs.get('beta', 0):.1f} "
+                       f"γ={kwargs.get('gamma', 0):.1f} "
+                       f"不对称={kwargs.get('asy', 0):.3f}")
 
         ble.on_data(on_data)
         ble.on_metrics(on_metrics)

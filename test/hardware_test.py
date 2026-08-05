@@ -94,7 +94,14 @@ async def test_device(address: str, device_type: str, duration: float) -> dict:
         nonlocal metrics_count
         metrics_count += 1
         result["metrics_count"] = metrics_count
-        logger.info(f"  [指标] 专注:{focus:.0f} 压力:{stress:.0f} 疲劳:{fatigue:.0f}")
+        logger.info(f"  [指标] 专注:{focus:.1f} 压力:{stress:.1f} 疲劳:{fatigue:.1f}")
+        if kwargs:
+            logger.info(f"        δ={kwargs.get('delta', 0):.1f} "
+                       f"θ={kwargs.get('theta', 0):.1f} "
+                       f"α={kwargs.get('alpha', 0):.1f} "
+                       f"β={kwargs.get('beta', 0):.1f} "
+                       f"γ={kwargs.get('gamma', 0):.1f} "
+                       f"不对称={kwargs.get('asy', 0):.3f}")
 
     ble.on_data(on_data)
     ble.on_metrics(on_metrics)
