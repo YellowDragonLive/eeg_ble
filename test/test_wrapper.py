@@ -26,6 +26,7 @@ from ble import (
     BLEConnectError,
     BLEStateError,
     HardwareDevice,
+    SignalMetrics,
 )
 
 # =============================================================================
@@ -407,20 +408,20 @@ async def test_fastapi_usage_pattern():
             })
             logger.info(f"[接收原始数据] 通道: {channel}, 长度: {len(data)} 字节, 数据: {data.hex()}")
 
-        def on_metrics(focus: float, stress: float, fatigue: float, **kwargs):
+        def on_metrics(metrics: SignalMetrics):
             received_metrics.append({
-                "focus": focus,
-                "stress": stress,
-                "fatigue": fatigue,
+                "focus": metrics.focus,
+                "stress": metrics.stress,
+                "fatigue": metrics.fatigue,
                 "timestamp": datetime.now().isoformat(),
             })
-            logger.info(f"[接收指标数据] 专注:{focus:.1f} 压力:{stress:.1f} 疲劳:{fatigue:.1f}")
-            logger.info(f"  [扩展指标] δ={kwargs.get('delta', 0):.1f} "
-                       f"θ={kwargs.get('theta', 0):.1f} "
-                       f"α={kwargs.get('alpha', 0):.1f} "
-                       f"β={kwargs.get('beta', 0):.1f} "
-                       f"γ={kwargs.get('gamma', 0):.1f} "
-                       f"不对称={kwargs.get('asy', 0):.3f}")
+            logger.info(f"[接收指标数据] 专注:{metrics.focus:.1f} 压力:{metrics.stress:.1f} 疲劳:{metrics.fatigue:.1f}")
+            logger.info(f"  [扩展指标] δ={metrics.delta:.1f} "
+                       f"θ={metrics.theta:.1f} "
+                       f"α={metrics.alpha:.1f} "
+                       f"β={metrics.beta:.1f} "
+                       f"γ={metrics.gamma:.1f} "
+                       f"不对称={metrics.asy:.3f}")
 
         ble.on_data(on_data)
         ble.on_metrics(on_metrics)
@@ -429,18 +430,20 @@ async def test_fastapi_usage_pattern():
         for cb in ble._raw_data_callbacks:
             cb("ALG", bytearray(b"\xC0\x01\x02"))
 
+        # 创建指标对象并触发回调
+        test_metrics = SignalMetrics(
+            focus=75.5,
+            stress=23.0,
+            fatigue=15.0,
+            asy=0.12,
+            delta=125.5,
+            theta=89.0,
+            alpha=156.2,
+            beta=78.3,
+            gamma=45.0,
+        )
         for cb in ble._metrics_callbacks:
-            cb(
-                focus=75.5,
-                stress=23.0,
-                fatigue=15.0,
-                asy=0.12,
-                delta=125.5,
-                theta=89.0,
-                alpha=156.2,
-                beta=78.3,
-                gamma=45.0,
-            )
+            cb(test_metrics)
 
         # 验证
         assert len(received_data) == 1

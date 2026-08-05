@@ -87,7 +87,7 @@ import logging
 from typing import Callable, List, Dict, Any, Optional
 from dataclasses import dataclass, field
 
-from .device import HardwareDevice
+from .device import HardwareDevice, SignalMetrics
 from .exceptions import BLEError
 from .constants import (
     SERVICE_UUID,
@@ -114,12 +114,8 @@ RawDataCallback = Callable[[str, bytearray], None]
 
 # 指标数据回调
 # 参数:
-#   - focus: float - 专注度 (0-100)
-#   - stress: float - 压力指数 (0-100)
-#   - fatigue: float - 疲劳度 (0-100)
-#   - asy: float - 左右脑不对称指数
-#   - delta, theta, alpha, beta, gamma: float - 频段能量
-MetricsCallback = Callable[..., None]
+#   - metrics: SignalMetrics - 包含所有指标的对象
+MetricsCallback = Callable[["SignalMetrics"], None]
 
 
 # =============================================================================
@@ -345,20 +341,25 @@ class BLEWrapper:
         收到解析后的神经反馈指标时触发，约 1-2Hz 更新频率。
 
         参数:
-            callback: 回调函数，支持以下参数:
-                    - focus: float     专注度 (0-100)
-                    - stress: float    压力指数 (0-100)
-                    - fatigue: float   疲劳度 (0-100)
-                    - asy: float       左右脑不对称指数
-                    - delta: float     频段能量
-                    - theta: float
-                    - alpha: float
-                    - beta: float
-                    - gamma: float
+            callback: 回调函数，签名为 (metrics: SignalMetrics)
+                    metrics 包含:
+                    - focus: float    专注度 (0-100)
+                    - stress: float   压力指数 (0-100)
+                    - fatigue: float  疲劳度 (0-100)
+                    - asy: float     左右脑不对称指数
+                    - delta: float   Delta 频段能量
+                    - theta: float   Theta 频段能量
+                    - alpha: float   Alpha 频段能量
+                    - beta: float    Beta 频段能量
+                    - gamma: float   Gamma 频段能量
 
         示例:
-            def on_metrics(focus, stress, fatigue, **kwargs):
-                print(f"专注: {focus}, 压力: {stress}")
+            from ble import SignalMetrics
+
+            def on_metrics(metrics: SignalMetrics):
+                print(f"专注: {metrics.focus}, 压力: {metrics.stress}")
+                print(f"脑波: δ={metrics.delta:.1f} θ={metrics.theta:.1f} "
+                      f"α={metrics.alpha:.1f} β={metrics.beta:.1f} γ={metrics.gamma:.1f}")
 
             ble.on_metrics(on_metrics)
         """
@@ -495,17 +496,7 @@ class BLEWrapper:
 
             for cb in self._metrics_callbacks:
                 try:
-                    cb(
-                        focus=metrics.focus,
-                        stress=metrics.stress,
-                        fatigue=metrics.fatigue,
-                        asy=metrics.asy,
-                        delta=metrics.delta,
-                        theta=metrics.theta,
-                        alpha=metrics.alpha,
-                        beta=metrics.beta,
-                        gamma=metrics.gamma,
-                    )
+                    cb(metrics)
                 except Exception as e:
                     self._logger.error(f"指标回调执行错误: {e}")
 

@@ -27,7 +27,7 @@ from pathlib import Path
 # 添加父目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from ble import BLEWrapper
+from ble import BLEWrapper, SignalMetrics
 
 # =============================================================================
 # 日志配置
@@ -90,18 +90,17 @@ async def test_device(address: str, device_type: str, duration: float) -> dict:
         result["data_count"] = data_count
         logger.info(f"  [数据] {channel}: {data.hex()[:32]}{'...' if len(data) > 16 else ''}")
 
-    def on_metrics(focus: float, stress: float, fatigue: float, **kwargs):
+    def on_metrics(metrics: SignalMetrics):
         nonlocal metrics_count
         metrics_count += 1
         result["metrics_count"] = metrics_count
-        logger.info(f"  [指标] 专注:{focus:.1f} 压力:{stress:.1f} 疲劳:{fatigue:.1f}")
-        if kwargs:
-            logger.info(f"        δ={kwargs.get('delta', 0):.1f} "
-                       f"θ={kwargs.get('theta', 0):.1f} "
-                       f"α={kwargs.get('alpha', 0):.1f} "
-                       f"β={kwargs.get('beta', 0):.1f} "
-                       f"γ={kwargs.get('gamma', 0):.1f} "
-                       f"不对称={kwargs.get('asy', 0):.3f}")
+        logger.info(f"  [指标] 专注:{metrics.focus:.1f} 压力:{metrics.stress:.1f} 疲劳:{metrics.fatigue:.1f}")
+        logger.info(f"        δ={metrics.delta:.1f} "
+                   f"θ={metrics.theta:.1f} "
+                   f"α={metrics.alpha:.1f} "
+                   f"β={metrics.beta:.1f} "
+                   f"γ={metrics.gamma:.1f} "
+                   f"不对称={metrics.asy:.3f}")
 
     ble.on_data(on_data)
     ble.on_metrics(on_metrics)

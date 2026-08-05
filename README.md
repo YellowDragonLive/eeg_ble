@@ -35,8 +35,11 @@ async def main():
     def on_data(channel, data):
         print(f"[{channel}] {data.hex()}")
 
-    def on_metrics(focus, stress, fatigue, **kwargs):
-        print(f"Focus: {focus}, Stress: {stress}")
+    def on_metrics(metrics):
+        print(f"Focus: {metrics.focus}, Stress: {metrics.stress}, Fatigue: {metrics.fatigue}")
+        print(f"Brain waves: δ={metrics.delta:.1f} θ={metrics.theta:.1f} "
+              f"α={metrics.alpha:.1f} β={metrics.beta:.1f} γ={metrics.gamma:.1f}")
+        print(f"Asymmetry: {metrics.asy:.3f}")
 
     ble.on_data(on_data)
     ble.on_metrics(on_metrics)
@@ -90,33 +93,29 @@ def on_data(channel: str, data: bytearray):
 
 #### Metrics Callback
 ```python
-def on_metrics(
-    focus: float,    # Focus level (0-100)
-    stress: float,   # Stress index (0-100)
-    fatigue: float,  # Fatigue level (0-100)
-    **kwargs         # Extended metrics
-):
-    """
-    Core metrics:
-    - focus: float   - Focus/attention level (0-100)
-    - stress: float - Stress index (0-100)
-    - fatigue: float - Fatigue level (0-100)
+from ble import SignalMetrics
 
-    Extended metrics (in kwargs):
-    - asy: float     - Left-right brain asymmetry index (-1 to 1)
-    - delta: float   - Delta band power (0.5-4 Hz)
-    - theta: float   - Theta band power (4-8 Hz)
-    - alpha: float   - Alpha band power (8-13 Hz)
-    - beta: float    - Beta band power (13-30 Hz)
-    - gamma: float   - Gamma band power (30-100 Hz)
+def on_metrics(metrics: SignalMetrics):
     """
-    print(f"Focus: {focus:.1f}, Stress: {stress:.1f}, Fatigue: {fatigue:.1f}")
-    print(f"Brain waves: δ={kwargs.get('delta',0):.1f} "
-          f"θ={kwargs.get('theta',0):.1f} "
-          f"α={kwargs.get('alpha',0):.1f} "
-          f"β={kwargs.get('beta',0):.1f} "
-          f"γ={kwargs.get('gamma',0):.1f}")
-    print(f"Asymmetry: {kwargs.get('asy', 0):.3f}")
+    metrics: SignalMetrics - All brain metrics in one object
+
+    Core metrics (0-100):
+    - metrics.focus: float   - Focus/attention level
+    - metrics.stress: float  - Stress index
+    - metrics.fatigue: float - Fatigue level
+
+    Extended metrics:
+    - metrics.asy: float     - Left-right brain asymmetry (-1 to 1)
+    - metrics.delta: float   - Delta band power (0.5-4 Hz)
+    - metrics.theta: float   - Theta band power (4-8 Hz)
+    - metrics.alpha: float   - Alpha band power (8-13 Hz)
+    - metrics.beta: float    - Beta band power (13-30 Hz)
+    - metrics.gamma: float   - Gamma band power (30-100 Hz)
+    """
+    print(f"Focus: {metrics.focus:.1f}, Stress: {metrics.stress:.1f}, Fatigue: {metrics.fatigue:.1f}")
+    print(f"Brain waves: δ={metrics.delta:.1f} θ={metrics.theta:.1f} "
+          f"α={metrics.alpha:.1f} β={metrics.beta:.1f} γ={metrics.gamma:.1f}")
+    print(f"Asymmetry: {metrics.asy:.3f}")
 ```
 
 ### Device Search Result Format
